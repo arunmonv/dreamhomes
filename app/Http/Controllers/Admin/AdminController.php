@@ -107,9 +107,12 @@ class AdminController extends Controller
         'site_name', 'tagline', 'whatsapp', 'phone',
         'hero_title', 'hero_highlight', 'hero_text',
         'cta_title', 'cta_text',
-        'trust_1', 'trust_2', 'trust_3', 'about_text',
+        'trust_1', 'trust_2', 'trust_3', 'about_text', 'address', 'email',
+        'stat1_num', 'stat1_label', 'stat2_num', 'stat2_label', 'stat3_num', 'stat3_label',
     ];
-    public const IMAGE_KEYS = ['logo', 'hero_image', 'cta_image'];
+    public const IMAGE_KEYS = ['logo', 'hero_image', 'cta_image', 'about_image'];
+    // Short looping background video for the hero (mp4/webm, max ~12 MB)
+    public const VIDEO_KEY = 'hero_video';
 
     public function settingsForm()
     {
@@ -121,6 +124,7 @@ class AdminController extends Controller
         $request->validate(array_merge(
             array_fill_keys(self::SETTING_KEYS, 'nullable|string|max:3000'),
             array_fill_keys(self::IMAGE_KEYS, 'nullable|image|mimes:jpg,jpeg,png,webp|max:3072'),
+            [self::VIDEO_KEY => 'nullable|file|mimes:mp4,webm|mimetypes:video/mp4,video/webm|max:12288'],
         ));
         foreach (self::SETTING_KEYS as $k) {
             Setting::put($k, $request->input($k));
@@ -131,6 +135,17 @@ class AdminController extends Controller
                     Storage::disk('public')->delete($old);
                 }
                 Setting::put($k, $request->file($k)->store('site', 'public'));
+            }
+        }
+        // Hero video: replace, or remove when the box is ticked
+        $vk = self::VIDEO_KEY;
+        if ($request->hasFile($vk) || $request->boolean('remove_hero_video')) {
+            if ($old = Setting::get($vk)) {
+                Storage::disk('public')->delete($old);
+                Setting::put($vk, null);
+            }
+            if ($request->hasFile($vk)) {
+                Setting::put($vk, $request->file($vk)->store('site', 'public'));
             }
         }
         return back()->with('ok', 'Settings saved.');
@@ -148,5 +163,21 @@ class AdminController extends Controller
     {
         $enquiry->delete();
         return back()->with('ok', 'Deleted.');
+    }
+
+    /* ---------- Change password (no SSH on shared hosting, so it must be possible here) ---------- */
+    public function passwordForm()
+    {
+        return view('admin.password');
+    }
+
+    public function passwordSave(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required|current_password',
+            'password'         => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::min(12)->letters()->numbers()],
+        ]);
+        $request->user()->update(['password' => \Illuminate\Support\Facades\Hash::make($request->password)]);
+        return back()->with('ok', 'Password changed.');
     }
 }

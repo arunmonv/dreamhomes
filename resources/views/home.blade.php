@@ -20,40 +20,36 @@
 
 @section('content')
 {{-- Hero --}}
-@if(empty($s['hero_image']))
-{{-- Default hero: the supplied banners (headline + search bar are part of the picture).
-     A real, working search form sits exactly over the drawn search bar, and the H1 is
-     kept as hidden text so search engines and screen readers still get it. --}}
-<section class="hero-img">
-    <h1 class="sr">{{ $s['hero_title'] ?? '' }} {{ $s['hero_highlight'] ?? '' }} - {{ $s['hero_text'] ?? '' }}</h1>
-    <img class="hd" src="{{ asset('img/01_desktop_hero_banner.jpg') }}" width="1163" height="393" alt="{{ $s['site_name'] ?? '' }}: {{ $s['hero_text'] ?? '' }}" fetchpriority="high">
-    <img class="hm" src="{{ asset('img/02_mobile_hero_banner.jpg') }}" width="341" height="600" alt="{{ $s['site_name'] ?? '' }}: {{ $s['hero_text'] ?? '' }}" fetchpriority="high">
-    <form action="{{ route('properties') }}" role="search">
-        <input name="q" placeholder=" " aria-label="Search by location or property type" autocomplete="off">
-        <button aria-label="Search"></button>
-    </form>
-</section>
-@else
-{{-- Admin-uploaded hero: live text + search drawn by the site --}}
-<section class="hero" style="background-image:linear-gradient(90deg,rgba(0,20,10,.65),rgba(0,0,0,.1)),url('{{ asset('storage/'.$s['hero_image']) }}')">
+{{-- Hero: full-width photo, centred text, one main button. Default photo = right half of the supplied banner
+     (no baked-in text); upload a larger photo in Admin > Site Settings for best quality. --}}
+@php $heroBg = !empty($s['hero_image']) ? asset('storage/'.$s['hero_image']) : asset('img/01_desktop_hero_banner.jpg'); @endphp
+<section class="hero3 {{ empty($s['hero_image']) ? 'dflt' : '' }}" style="background-image:url('{{ $heroBg }}')">
+    @if(!empty($s['hero_video']))
+    <video class="hero-vid" autoplay muted loop playsinline preload="auto" aria-hidden="true"><source src="{{ asset('storage/'.$s['hero_video']) }}" type="{{ str_ends_with($s['hero_video'], '.webm') ? 'video/webm' : 'video/mp4' }}"></video>
+    @endif
     <div class="wrap">
-        <h1>{{ $s['hero_title'] ?? '' }}<br><em>{{ $s['hero_highlight'] ?? '' }}</em></h1>
+        <h1>{{ $s['hero_title'] ?? '' }} <em>{{ $s['hero_highlight'] ?? '' }}</em></h1>
         <p>{{ $s['hero_text'] ?? '' }}</p>
-        <form action="{{ route('properties') }}" class="search">
+        <a class="btn hero-btn" href="{{ route('properties') }}">View Properties</a>
+        <form action="{{ route('properties') }}" class="search" role="search">
             <input name="q" placeholder="Search by location, property type..." aria-label="Search">
             <button>Search</button>
         </form>
     </div>
 </section>
-@endif
 
 {{-- Quick category tiles --}}
 <section class="wrap">
   <div class="tiles2">
     <a href="#enquiry"><img src="{{ asset('img/03_icon_house_construction.jpg') }}" width="288" height="144" alt="House Construction - build your dream home"></a>
-    <a href="{{ route('properties.type','land') }}"><img src="{{ asset('img/04_icon_land_for_sale.jpg') }}" width="272" height="144" alt="Land for Sale - prime plots and lands"></a>
     <a href="{{ route('properties.type','new_house') }}"><img src="{{ asset('img/05_icon_new_houses.jpg') }}" width="272" height="144" alt="New Houses - modern homes"></a>
     <a href="{{ route('properties.type','resale') }}"><img src="{{ asset('img/06_icon_resale_houses.jpg') }}" width="278" height="144" alt="Resale Houses - quality homes"></a>
+    {{-- No supplied image for this service, so it is drawn in the same card style --}}
+    <a href="#enquiry" class="tile-alt" aria-label="Old House Alteration - renovate and remodel">
+        <svg viewBox="0 0 48 48" fill="none" stroke="#1d4ed8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 24 24 6l20 18M9 20v22h30V20"/><rect x="19" y="28" width="10" height="14"/><path d="M33 8l7 7-9 9-7-7z" fill="#f5b400" stroke="#b07d00"/></svg>
+        <b>Old House Alteration</b><small>Renovate &amp; remodel</small>
+    </a>
+    <a href="{{ route('properties.type','land') }}"><img src="{{ asset('img/04_icon_land_for_sale.jpg') }}" width="272" height="144" alt="Land for Sale - prime plots and lands"></a>
   </div>
 </section>
 
@@ -91,4 +87,29 @@
     <p class="cta-call">Prefer to talk? <a href="tel:{{ preg_replace('/[^\d+]/', '', $s['phone']) }}">&#128222; Call {{ $s['phone'] }}</a></p>
     @endif
 </section>
+
+{{-- About + stats (hidden until filled in Admin > Site Settings) --}}
+@php
+    $stats = array_filter([
+        [$s['stat1_num'] ?? '', $s['stat1_label'] ?? ''],
+        [$s['stat2_num'] ?? '', $s['stat2_label'] ?? ''],
+        [$s['stat3_num'] ?? '', $s['stat3_label'] ?? ''],
+    ], fn ($x) => $x[0] !== '');
+@endphp
+@if(!empty($s['about_text']))
+<section class="about">
+    <div class="wrap about-in">
+        @if(!empty($s['about_image']))<img src="{{ asset('storage/'.$s['about_image']) }}" alt="{{ $s['site_name'] ?? '' }}" width="380" height="440" loading="lazy">@endif
+        <div>
+            <h2>About {{ $s['site_name'] ?? '' }}</h2>
+            <p class="sub">{{ $s['tagline'] ?? '' }}</p>
+            <p>{{ \Illuminate\Support\Str::limit($s['about_text'], 420) }}</p>
+            @if(count($stats))
+            <div class="stats">@foreach($stats as [$num, $label])<div><b>{{ $num }}</b><span>{{ $label }}</span></div>@endforeach</div>
+            @endif
+            <a class="btn navy" href="{{ route('about') }}">Learn more</a>
+        </div>
+    </div>
+</section>
+@endif
 @endsection

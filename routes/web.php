@@ -35,6 +35,9 @@ Route::prefix('admin')->group(function () {
         Route::get('settings', [A::class, 'settingsForm'])->name('settings');
         Route::post('settings', [A::class, 'settingsSave'])->name('settings.save');
 
+        Route::get('password', [A::class, 'passwordForm'])->name('password');
+        Route::post('password', [A::class, 'passwordSave'])->middleware('throttle:5,1')->name('password.save');
+
         Route::get('enquiries', [A::class, 'enquiries'])->name('enquiries');
         Route::delete('enquiries/{enquiry}', [A::class, 'enquiryDestroy'])->name('enquiries.destroy');
     });

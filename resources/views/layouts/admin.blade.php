@@ -44,6 +44,7 @@
     <a href="{{ route('admin.properties.index') }}" @class(['on' => request()->routeIs('admin.properties.*')])>Properties</a>
     <a href="{{ route('admin.enquiries') }}" @class(['on' => request()->routeIs('admin.enquiries*')])>Enquiries</a>
     <a href="{{ route('admin.settings') }}" @class(['on' => request()->routeIs('admin.settings*')])>Site Settings</a>
+    <a href="{{ route('admin.password') }}" @class(['on' => request()->routeIs('admin.password*')])>Change Password</a>
     <a href="{{ route('home') }}" target="_blank">View site</a>
     <span class="sp"></span>
     <form method="post" action="{{ route('admin.logout') }}">@csrf<button>Logout</button></form>
